@@ -4,16 +4,6 @@ bazel_dep(name = "rules_oci", version = "1.7.5")
 bazel_dep(name = "rules_pkg", version = "0.11.1")
 bazel_dep(name = "rules_python", version = "0.33.0")
 bazel_dep(name = "platforms", version = "0.0.10")
-bazel_dep(name = "rules_git", version = "1.0.0")
-
-git = use_extension("@rules_git//git/extensions.bzl", "git")
-git.repository(
-    name = "wan2gp_repo",
-    path = "Wan2GP",
-    remote = "https://github.com/deepbeepmeep/Wan2GP.git",
-    commit = "main",
-)
-use_repo(git, "wan2gp_repo")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(

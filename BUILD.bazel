@@ -31,8 +31,14 @@ EOF
 )
 
 genrule(
+    name = "clone_wan2gp",
+    outs = ["wan2gp_clone"],
+    cmd = "git clone $(WAN2GP_REPO) $@ || true",
+)
+
+genrule(
     name = "patch_wan2gp",
-    srcs = ["@wan2gp_repo//Wan2GP:all"],
+    srcs = [":clone_wan2gp"],
     outs = ["wan2gp_patched"],
     cmd = "cp -r $(SRCS) $@ && " +
           "sed -i \"s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g\" $@/models/wan/animate/motion_encoder.py || true",

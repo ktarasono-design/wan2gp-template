@@ -11,7 +11,7 @@ This is a Bazel-based build system for Wan2GP, replacing the original Dockerfile
 
 ```bash
 # Build the container image tarball
-bazel build //:wan2gp_image
+bazel build //:wan2gp_tarball
 
 # Load into Docker
 docker load -i bazel-bin/wan2gp_tarball/tar.tar
@@ -103,7 +103,11 @@ bazel run //:push_custom --define=CUSTOM_REGISTRY=localhost:5000/wan2gp --define
 ## Build with custom Wan2GP repo
 
 ```bash
-bazel build --action_env=WAN2GP_REPO=https://github.com/your/custom/repo.git //:wan2gp_tarball
+# Build with custom repository
+bazel build --action_env=WAN2GP_REPO=https://github.com/your/custom/repo.git //:wan2gp_image
+
+# Push with custom repository
+bazel run //:push_dockerhub_latest --action_env=WAN2GP_REPO=https://github.com/your/custom/repo.git
 ```
 
 ## Custom CUDA architectures
@@ -116,26 +120,28 @@ Edit `BUILD.bazel` to modify the `CUDA_ARCHITECTURES` environment variable:
 
 ## Structure
 
-- `MODULE.bazel`: Bazel module dependencies and repository fetches
-- `BUILD.bazel`: Container image definition
-- `.bazelrc`: Build configuration
-- `scripts/BUILD.bazel`: Helper scripts
+- `MODULE.bazel`: Bazel module dependencies and OCI image pulls
+- `BUILD.bazel`: Container image definition with genrules
+- `.bazelrc`: Build configuration with environment variables
 
 ## Key Components
 
 1. **Base Image**: Pulls `nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04` via rules_oci
-2. **Repository Fetch**: Clones Wan2GP from GitHub via rules_git
+2. **Repository Clone**: Clones Wan2GP from GitHub via genrule at build time
 3. **Patching**: Applies torch.cuda.amp.autocast patch via genrule
-4. **Layering**: Creates tar layers for repo, scripts, and workspace directories
-5. **Image Assembly**: Combines all layers into final OCI image
+4. **Dependency Installation**: Installs system and Python dependencies at container startup
+5. **Layering**: Creates tar layers for repo, scripts, and workspace directories
+6. **Image Assembly**: Combines all layers into final OCI image
 
 ## Dockerfile vs Bazel Equivalent
 
 | Dockerfile | Bazel |
 |------------|-------|
 | `FROM nvidia/cuda:...` | `oci.pull()` in MODULE.bazel |
-| `RUN git clone ...` | `git.repository()` in MODULE.bazel |
+| `RUN git clone ...` | `genrule()` cloning at build time |
 | `RUN sed -i ...` | `genrule()` for patching |
+| `RUN apt-get install ...` | `genrule()` creating install script |
+| `RUN pip install ...` | Included in install script, runs at container startup |
 | `COPY file.sh /opt/` | `pkg_tar()` with srcs |
 | `ENV VAR=value` | `oci_image(env={...})` |
 | `ENTRYPOINT [...]` | `oci_image(entrypoint=[...])` |
