@@ -71,7 +71,7 @@ pkg_tar_layer(
 
 docker_build(
     name = "wan2gp_image",
-    base = "@cuda_base//image",
+    base = "@cuda_base",
     tars = [
         ":wan2gp_tar",
         ":start_scripts",

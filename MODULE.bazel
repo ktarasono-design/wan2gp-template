@@ -1,6 +1,6 @@
 module(name = "wan2gp")
 
-bazel_dep(name = "rules_docker", version = "0.25.0")
+bazel_dep(name = "rules_docker", version = "0.16.0")
 bazel_dep(name = "rules_pkg", version = "0.10.0")
 bazel_dep(name = "rules_python", version = "0.31.0")
 bazel_dep(name = "platforms", version = "0.0.10")
@@ -8,6 +8,8 @@ bazel_dep(name = "platforms", version = "0.0.10")
 container_pull = use_extension("@rules_docker//container:pull.bzl", "container_pull")
 container_pull(
     name = "cuda_base",
+    digest = "",
+    platforms = ["linux/amd64"],
     tag = "12.8.0-cudnn-devel-ubuntu24.04",
     reference = "docker.io/nvidia/cuda",
 )
