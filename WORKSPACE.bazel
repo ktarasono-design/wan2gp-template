@@ -14,12 +14,6 @@ git_repository(
     tag = "0.10.0",
 )
 
-git_repository(
-    name = "rules_cc",
-    remote = "https://github.com/bazelbuild/rules_cc.git",
-    tag = "0.0.9",
-)
-
 load(
     "@io_bazel_rules_docker//repositories:repositories.bzl",
     container_repositories = "repositories",
@@ -37,3 +31,22 @@ container_pull(
     repository = "nvidia/cuda",
     tag = "12.8.0-cudnn-devel-ubuntu24.04",
 )
+
+container_pull(
+    name = "wan2gp_base",
+    registry = "docker.io",
+    repository = "wan2gp/cuda-base",
+    tag = "latest",
+)
+
+git_repository(
+    name = "rules_pkg",
+    remote = "https://github.com/bazelbuild/rules_pkg.git",
+    tag = "0.10.0",
+)
+
+load("@io_bazel_rules_docker//repositories:repositories.bzl", "container_repositories = "repositories")
+container_repositories()
+
+load("@io_bazel_rules_docker//repositories:deps.bzl", container_deps = "deps")
+container_deps()
