@@ -19,7 +19,7 @@ RUN python3 -m pip install --break-system-packages packaging
 
 RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && \
     cd /tmp/sageattention && \
-    export TORCH_CUDA_ARCH_LIST='8.0;8.6;8.9;9.0;12.0' FORCE_CUDA='1' MAX_JOBS='1' && \
+    export TORCH_CUDA_ARCH_LIST='8.0;8.6;12.0' FORCE_CUDA='1' && \
     python3 -m pip install --break-system-packages --no-build-isolation . && \
     rm -rf /tmp/sageattention
 
