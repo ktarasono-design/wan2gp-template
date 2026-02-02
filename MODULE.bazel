@@ -8,6 +8,6 @@ bazel_dep(name = "platforms", version = "0.0.10")
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "cuda_base",
-    image = "nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04",
+    image = "docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04",
 )
 use_repo(oci, "cuda_base")

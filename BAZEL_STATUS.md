@@ -65,7 +65,7 @@ Edit `BUILD.bazel` to change the Wan2GP repository URL in the `clone_wan2gp` gen
 
 ## Architecture
 
-1. **Base Layer**: Pulls nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04
+1. **Base Layer**: Pulls docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04
 2. **Dependency Script**: Generated at build time to install system and Python packages
 3. **Repository Clone**: Clones Wan2GP from GitHub via genrule at build time
 4. **Patching**: Applies torch.cuda.amp.autocast patch via genrule

@@ -9,6 +9,7 @@ The Dockerfile has been successfully converted to a Bazel build system with Dock
 1. **Invalid repository name error**: Removed `platforms` parameter from `oci.pull()` in MODULE.bazel
 2. **oci_image attribute errors**: Removed unsupported `ports` and `working_directory` attributes
 3. **Genrule environment variable error**: Simplified repository cloning by hardcoding URL in BUILD.bazel
+4. **Image pull error**: Added explicit `docker.io/` registry prefix to base image to fix DNS resolution
 
 ## File Structure
 
@@ -24,7 +25,7 @@ bazel_dep(name = "platforms", version = "0.0.10")
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "cuda_base",
-    image = "nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04",
+    image = "docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04",
 )
 use_repo(oci, "cuda_base")
 ```
@@ -101,7 +102,7 @@ Edit `BUILD.bazel` in the `oci_image` env section:
 
 ## Architecture Overview
 
-1. **Base Layer**: Pulls nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04 via rules_oci
+1. **Base Layer**: Pulls docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04 via rules_oci
 2. **Dependency Script**: Generated at build time via genrule
 3. **Repository Clone**: Clones Wan2GP from GitHub via genrule at build time
 4. **Patching**: Applies torch.cuda.amp.autocast patch via genrule

@@ -121,7 +121,7 @@ Edit `BUILD.bazel` to modify the `CUDA_ARCHITECTURES` environment variable:
 
 ## Key Components
 
-1. **Base Image**: Pulls `nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04` via rules_oci
+1. **Base Image**: Pulls `docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04` via rules_oci
 2. **Repository Clone**: Clones Wan2GP from GitHub via genrule at build time
 3. **Patching**: Applies torch.cuda.amp.autocast patch via genrule
 4. **Dependency Installation**: Installs system and Python dependencies at container startup
@@ -132,7 +132,7 @@ Edit `BUILD.bazel` to modify the `CUDA_ARCHITECTURES` environment variable:
 
 | Dockerfile | Bazel |
 |------------|-------|
-| `FROM nvidia/cuda:...` | `oci.pull()` in MODULE.bazel |
+| `FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04` | `oci.pull("docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04")` in MODULE.bazel |
 | `RUN git clone ...` | `genrule()` cloning at build time |
 | `RUN sed -i ...` | `genrule()` for patching |
 | `RUN apt-get install ...` | `genrule()` creating install script |
