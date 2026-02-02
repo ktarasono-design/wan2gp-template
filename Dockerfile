@@ -2,6 +2,8 @@
 # Base: CUDA 12.8 / cuDNN runtime with Python + PyTorch preinstalled (conda @ /opt/conda)
 FROM pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime
 
+ARG CUDA_ARCHITECTURES="8.0;8.6;8.9;9.0;12.0"
+
 # ---- Environment ----
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
@@ -38,9 +40,7 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
 
 # ---- Clone Wan2GP (pin a commit via build arg; default to main) ----
 ARG WAN2GP_REPO="https://github.com/deepbeepmeep/Wan2GP.git"
-ARG WAN2GP_COMMIT="main"
-RUN git clone --depth=1 ${WAN2GP_REPO} ${WAN2GP_DIR} && \
-    ( [ "${WAN2GP_COMMIT}" = "main" ] || (cd ${WAN2GP_DIR} && git fetch --depth=1 origin ${WAN2GP_COMMIT} && git checkout ${WAN2GP_COMMIT}) )
+RUN git clone ${WAN2GP_REPO} ${WAN2GP_DIR}
 
 # Patch the deprecated autocast once at build-time (prevents runtime warnings)
 RUN sed -i "s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g" \
@@ -51,25 +51,49 @@ RUN sed -i "s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g" \
 RUN python -V && \
     python -m pip install --upgrade pip wheel && \
     python -m pip install --no-deps "numpy<2.1" "cython<3.2" "setuptools<75" && \
-    if [ -f "${WAN2GP_DIR}/requirements.txt" ]; then \
-      python -m pip install -r ${WAN2GP_DIR}/requirements.txt ; \
-    fi && \
-    # ---- Pin gradio to a stable v4 to avoid blank-UI regressions with v5+ ----
-    python -m pip install \
-      "gradio==4.44.1" \
-      accelerate transformers diffusers timm einops safetensors pillow \
-      pydantic numpy psutil uvicorn fastapi jupyterlab hf_transfer huggingface_hub && \
+    python -m pip install -r ${WAN2GP_DIR}/requirements.txt && \
     python - <<'PY'
 import torch, transformers, diffusers, numpy, huggingface_hub, gradio
 print("Sanity:", torch.__version__, transformers.__version__, diffusers.__version__, numpy.__version__, huggingface_hub.__version__, gradio.__version__)
 PY
 
-# ---- Prefetch LoRAs into the image so first job is instant ----
-RUN mkdir -p /opt/Wan2GP/loras_i2v && \
-    cd /opt/Wan2GP/loras_i2v && \
-    curl -fL --retry 3 -O https://github.com/ArpitKhurana-ai/wan2gp-assets/releases/download/v1.0/lightx2v_I2V_14B_480p_cfg_step_distill_rank64_bf16.safetensors && \
-    curl -fL --retry 3 -O https://github.com/ArpitKhurana-ai/wan2gp-assets/releases/download/v1.0/Wan2.1_I2V_14B_FusionX_LoRA.safetensors && \
-    ls -lh
+# Install SageAttention from git (patch GPU detection)
+ENV TORCH_CUDA_ARCH_LIST="${CUDA_ARCHITECTURES}"
+ENV FORCE_CUDA="1"
+ENV MAX_JOBS="1"
+
+COPY <<EOF /tmp/patch_setup.py
+import os
+with open('setup.py', 'r') as f:
+    content = f.read()
+
+# Get architectures from environment variable
+arch_list = os.environ.get('TORCH_CUDA_ARCH_LIST')
+arch_set = '{' + ', '.join([f'"{arch}"' for arch in arch_list.split(';')]) + '}'
+
+# Replace the GPU detection section
+old_section = '''compute_capabilities = set()
+device_count = torch.cuda.device_count()
+for i in range(device_count):
+    major, minor = torch.cuda.get_device_capability(i)
+    if major < 8:
+        warnings.warn(f"skipping GPU {i} with compute capability {major}.{minor}")
+        continue
+    compute_capabilities.add(f"{major}.{minor}")'''
+
+new_section = 'compute_capabilities = ' + arch_set + '''
+print(f"Manually set compute capabilities: {compute_capabilities}")'''
+
+content = content.replace(old_section, new_section)
+
+with open('setup.py', 'w') as f:
+    f.write(content)
+EOF
+
+RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && \
+    cd /tmp/sageattention && \
+    python /tmp/patch_setup.py && \
+    python -m pip install --no-build-isolation .
 
 # ---- Runtime entry assets ----
 COPY start-wan2gp.sh /opt/start-wan2gp.sh
