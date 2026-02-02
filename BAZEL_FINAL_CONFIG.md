@@ -64,7 +64,7 @@ oci_image(
 fi
 
 # Build and load to Docker
-bazel run //:wan2gp_image
+bazel build //:wan2gp_image
 
 # Push to Docker Hub
 bazel run //:push_dockerhub_latest

@@ -1,52 +1,15 @@
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball", "oci_push")
-
-genrule(
-    name = "install_deps",
-    outs = ["install_deps.sh"],
-    cmd = "echo '#!/bin/bash' > $@ && " +
-          "echo 'set -e' >> $@ && " +
-          "echo 'apt-get update -y && apt-get install -y --no-install-recommends git git-lfs curl ca-certificates ffmpeg aria2 tini jq build-essential python3-dev pkg-config libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 python3 python3-pip wget curl cmake ninja-build' >> $@ && " +
-          "echo 'git lfs install' >> $@ && " +
-          "echo 'apt-get clean' >> $@ && " +
-          "echo 'rm -rf /var/lib/apt/lists/*' >> $@ && " +
-          "echo 'python3 -m pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.10.0+cu128 torchvision==0.25.0+cu128' >> $@ && " +
-          "echo 'python3 -m pip install --break-system-packages --no-deps \"numpy<2.1\" \"cython<3.2\" \"setuptools<75\"' >> $@ && " +
-          "echo 'python3 -m pip install --break-system-packages /opt/Wan2GP/requirements.txt' >> $@ && " +
-          "echo 'export TORCH_CUDA_ARCH_LIST=\"8.0;8.6;8.9;9.0;12.0\" FORCE_CUDA=\"1\" MAX_JOBS=\"1\"' >> $@ && " +
-          "echo 'git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention' >> $@ && " +
-          "echo 'cd /tmp/sageattention' >> $@ && " +
-          "echo 'export EXT_PARALLEL=4 NVCC_APPEND_FLAGS=\"--threads 8\" MAX_JOBS=32' >> $@ && " +
-          "echo 'python3 -m pip install --break-system-packages --no-build-isolation .' >> $@ && " +
-          "echo 'rm -rf /tmp/sageattention' >> $@",
-    executable = True,
-)
-
-genrule(
-    name = "clone_wan2gp",
-    outs = ["wan2gp_clone.tar"],
-    cmd = "git clone https://github.com/deepbeepmeep/Wan2GP.git tmp_repo && tar -cf $@ tmp_repo && rm -rf tmp_repo || true",
-)
+load("@rules_docker//container:container.bzl", "container_image", "container_push")
 
 genrule(
     name = "patch_wan2gp",
-    srcs = [":clone_wan2gp"],
-    outs = ["wan2gp_patched.tar"],
-    cmd = "mkdir -p tmp_repo && tar -xf $(SRCS) -C tmp_repo && sed -i \"s/torch.cuda.amp.autocast(/torch.amp.autocast(cuda,/g\" tmp_repo/models/wan/animate/motion_encoder.py 2>/dev/null || true && tar -cf $@ -C tmp_repo . && rm -rf tmp_repo || true",
+    cmd = "git clone https://github.com/deepbeepmeep/Wan2GP.git $@ && sed -i 's/torch.cuda.amp.autocast(/torch.amp.autocast(cuda,/g' $@/models/wan/animate/motion_encoder.py 2>/dev/null || true",
 )
 
 pkg_tar(
     name = "wan2gp_tar",
     srcs = [":patch_wan2gp"],
     package_dir = "/opt/Wan2GP",
-    strip_prefix = "",
-)
-
-pkg_tar(
-    name = "install_deps_tar",
-    srcs = [":install_deps"],
-    mode = "0755",
-    package_dir = "/opt",
 )
 
 pkg_tar(
@@ -56,6 +19,7 @@ pkg_tar(
         "restart-wan2gp.sh",
     ],
     mode = "0755",
+    package_dir = "/opt",
 )
 
 pkg_tar(
@@ -71,10 +35,28 @@ pkg_tar(
     ],
 )
 
-oci_image(
+container_image(
     name = "wan2gp_image",
-    base = "@cuda_base",
-    entrypoint = ["/usr/bin/tini", "-g", "--", "/bin/bash", "-c", "cd /opt/Wan2GP && /opt/install_deps.sh && /opt/start-wan2gp.sh"],
+    base = "@cuda_base//image",
+    tars = [
+        ":wan2gp_tar",
+        ":start_scripts",
+        ":workspace_dirs",
+    ],
+    cmd = [
+        "/bin/bash", "-c",
+        "apt-get update -y && apt-get install -y --no-install-recommends git git-lfs curl ca-certificates ffmpeg aria2 tini jq build-essential python3-dev pkg-config libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 python3 python3-pip wget curl cmake ninja-build && " +
+        "git lfs install && " +
+        "apt-get clean && rm -rf /var/lib/apt/lists/* && " +
+        "python3 -m pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.10.0+cu128 torchvision==0.25.0+cu128 && " +
+        "python3 -m pip install --break-system-packages --no-deps 'numpy<2.1' 'cython<3.2' 'setuptools<75' && " +
+        "python3 -m pip install --break-system-packages /opt/Wan2GP/requirements.txt && " +
+        "export TORCH_CUDA_ARCH_LIST='8.0;8.6;8.9;9.0;12.0' FORCE_CUDA='1' MAX_JOBS='1' && " +
+        "git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && " +
+        "cd /tmp/sageattention && export EXT_PARALLEL=4 NVCC_APPEND_FLAGS='--threads 8' MAX_JOBS=32 && python3 -m pip install --break-system-packages --no-build-isolation . && " +
+        "rm -rf /tmp/sageattention && " +
+        "/opt/start-wan2gp.sh",
+    ],
     env = {
         "CUDA_ARCHITECTURES": "8.0;8.6;8.9;9.0;12.0",
         "DEBIAN_FRONTEND": "noninteractive",
@@ -97,36 +79,27 @@ oci_image(
         "GRADIO_ALLOW_FLAGGING": "never",
         "GRADIO_SHARE": "False",
         "GRADIO_USE_CDN": "False",
-        "TORCH_CUDA_ARCH_LIST": "8.0;8.6;8.9;9.0;12.0",
-        "FORCE_CUDA": "1",
-        "MAX_JOBS": "1",
     },
-    tars = [
-        ":wan2gp_tar",
-        ":install_deps_tar",
-        ":start_scripts",
-        ":workspace_dirs",
-    ],
+    ports = ["7862", "8888"],
+    workdir = "/opt/Wan2GP",
 )
 
-oci_tarball(
-    name = "wan2gp_tarball",
-    image = ":wan2gp_image",
-    repo_tags = ["wan2gp:latest"],
-)
-
-oci_push(
+container_push(
     name = "push_dockerhub_latest",
     image = ":wan2gp_image",
-    repository = "docker.io/stabldiff/wan2gp",
-    remote_tags = ["latest"],
+    format = "Docker",
+    registry = "docker.io",
+    repository = "stabldiff/wan2gp",
+    tag = "latest",
 )
 
-oci_push(
+container_push(
     name = "push_dockerhub_tag",
     image = ":wan2gp_image",
-    repository = "docker.io/stabldiff/wan2gp",
-    remote_tags = ["$(VERSION)"],
+    format = "Docker",
+    registry = "docker.io",
+    repository = "stabldiff/wan2gp",
+    tag = "$(VERSION)",
 )
 
 alias(
@@ -145,25 +118,4 @@ alias(
     name = "push-version",
     actual = ":push_dockerhub_tag",
     visibility = ["//visibility:public"],
-)
-
-oci_push(
-    name = "push_ghcr_latest",
-    image = ":wan2gp_image",
-    repository = "ghcr.io/$(GHCR_USERNAME)/wan2gp",
-    remote_tags = ["latest"],
-)
-
-oci_push(
-    name = "push_ghcr_tag",
-    image = ":wan2gp_image",
-    repository = "ghcr.io/$(GHCR_USERNAME)/wan2gp",
-    remote_tags = ["$(VERSION)"],
-)
-
-oci_push(
-    name = "push_custom",
-    image = ":wan2gp_image",
-    repository = "$(CUSTOM_REGISTRY)/wan2gp",
-    remote_tags = ["$(VERSION)"],
 )
