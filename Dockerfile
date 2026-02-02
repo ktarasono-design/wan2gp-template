@@ -1,6 +1,6 @@
 # Wan2GP — ProbeAI (A40 / RTX 5090)
 # Base: CUDA 12.8 / cuDNN runtime with Python + PyTorch preinstalled (conda @ /opt/conda)
-FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04
+FROM --platform=linux/amd64 localhost/cuda-base:latest
 
 ARG CUDA_ARCHITECTURES="8.0;8.6;8.9;9.0;12.0"
 
@@ -27,20 +27,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     GRADIO_SHARE=False \
     GRADIO_USE_CDN=False
 
-# ---- System deps (toolchain + minimal X/GL for OpenCV/insightface) ----
-RUN apt-get update -y && apt-get install -y --no-install-recommends \
-    git git-lfs curl ca-certificates ffmpeg aria2 tini jq \
-    build-essential python3-dev pkg-config \
-    libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 \
- && git lfs install \
- && rm -rf /var/lib/apt/lists/*
-
-RUN apt update && \
-    apt install -y \
-    python3 python3-pip git wget curl cmake ninja-build \
-    libgl1 libglib2.0-0 ffmpeg && \
-    apt clean
-
 # ---- Clone Wan2GP (pin a commit via build arg; default to main) ----
 ARG WAN2GP_REPO="https://github.com/deepbeepmeep/Wan2GP.git"
 RUN git clone ${WAN2GP_REPO} ${WAN2GP_DIR}
@@ -49,25 +35,10 @@ RUN git clone ${WAN2GP_REPO} ${WAN2GP_DIR}
 RUN sed -i "s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g" \
     ${WAN2GP_DIR}/models/wan/animate/motion_encoder.py || true
 
-RUN pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.10.0+cu128 torchvision==0.25.0+cu128
-
 # ---- Python deps (compile-safe order) ----
 # NOTE: Torch already exists in /opt/conda from the base image; do NOT reinstall it.
 RUN python3 -V && \
-    python3 -m pip install --break-system-packages --no-deps "numpy<2.1" "cython<3.2" "setuptools<75" && \
     python3 -m pip install --break-system-packages -r ${WAN2GP_DIR}/requirements.txt
-
-# Install SageAttention from git (patch GPU detection)
-ENV TORCH_CUDA_ARCH_LIST="${CUDA_ARCHITECTURES}"
-ENV FORCE_CUDA="1"
-ENV MAX_JOBS="1"
-
-RUN apt update
-
-RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && \
-    cd /tmp/sageattention && \
-    export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32 && \
-    python3 -m pip install --break-system-packages --no-build-isolation .
 
 # ---- Runtime entry assets ----
 COPY start-wan2gp.sh /opt/start-wan2gp.sh

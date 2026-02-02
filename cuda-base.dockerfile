@@ -15,6 +15,8 @@ RUN python3 -m pip install --break-system-packages \
 RUN python3 -m pip install --break-system-packages \
     --no-deps "numpy<2.1" "cython<3.2" "setuptools<75"
 
+RUN python3 -m pip install --break-system-packages packaging
+
 RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && \
     cd /tmp/sageattention && \
     export TORCH_CUDA_ARCH_LIST='8.0;8.6;8.9;9.0;12.0' FORCE_CUDA='1' MAX_JOBS='1' && \
