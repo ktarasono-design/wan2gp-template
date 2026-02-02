@@ -135,11 +135,12 @@ oci.pull(
 
 ## Issues Resolved
 
-1. ✅ Invalid repository name error - Removed `platforms` parameter
+1. ✅ Invalid repository name error - Changed `platforms` to use platform strings: `["linux/amd64"]`
 2. ✅ oci_image attribute errors - Removed unsupported `ports` and `working_directory`
 3. ✅ Genrule environment variable error - Hardcoded repository URL
 4. ✅ Image pull error - Added explicit `docker.io/` registry prefix to fix DNS resolution
 5. ✅ Base image reference error - Changed `base = "@cuda_base//image"` to `base = "@cuda_base"`
+6. ✅ Multi-architecture image error - Added required `platforms` parameter to `oci.pull()`
 
 ## Architecture
 

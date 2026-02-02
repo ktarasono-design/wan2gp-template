@@ -6,11 +6,12 @@ The Dockerfile has been successfully converted to a Bazel build system with Dock
 
 ## Fixed Issues
 
-1. **Invalid repository name error**: Removed `platforms` parameter from `oci.pull()` in MODULE.bazel
+1. **Invalid repository name error**: Changed `platforms` from Bazel targets to platform strings: `platforms = ["linux/amd64"]`
 2. **oci_image attribute errors**: Removed unsupported `ports` and `working_directory` attributes
 3. **Genrule environment variable error**: Simplified repository cloning by hardcoding URL in BUILD.bazel
 4. **Image pull error**: Added explicit `docker.io/` registry prefix to base image to fix DNS resolution
 5. **Base image reference error**: Changed `base = "@cuda_base//image"` to `base = "@cuda_base"`
+6. **Multi-architecture image error**: Added required `platforms = ["linux/amd64"]` to `oci.pull()`
 
 ## File Structure
 
@@ -27,6 +28,7 @@ oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "cuda_base",
     image = "docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04",
+    platforms = ["linux/amd64"],  # Required for multi-arch images
 )
 use_repo(oci, "cuda_base")
 ```

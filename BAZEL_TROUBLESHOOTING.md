@@ -2,13 +2,22 @@
 
 ## Issue Resolution Log
 
-### 1. Invalid Repository Name Error
+### 1. Invalid Repository Name Error (Fixed incorrectly initially)
 **Error:**
 ```
 invalid user-provided repo name 'cuda_base_@platforms__os:linux': valid names may contain only A-Z, a-z, 0-9, '-', '_', '.', and must start with a letter
 ```
 
-**Solution:** Removed `platforms` parameter from `oci.pull()` in MODULE.bazel
+**Incorrect Solution:** Removed `platforms` parameter - this caused another error
+
+**Correct Solution:** Use platform strings instead of Bazel targets:
+```python
+# ❌ Wrong (causes repo name error)
+platforms = ["@platforms//os:linux", "@platforms//arch:x86_64"]
+
+# ✅ Correct
+platforms = ["linux/amd64"]
+```
 
 ### 2. oci_image Attribute Errors
 **Error:**
@@ -57,6 +66,7 @@ oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
 oci.pull(
     name = "my_base",
     image = "docker.io/library/ubuntu:22.04",
+    platforms = ["linux/amd64"],  # Required for multi-arch images
 )
 use_repo(oci, "my_base")
 ```
@@ -73,6 +83,21 @@ oci_image(
 ### Important: Do NOT use `//image` suffix
 The `oci.pull()` extension creates a repository that can be referenced directly, not with a `//image` suffix.
 
+### 6. Multi-Architecture Image Error
+**Error:**
+```
+no such package '@@rules_oci++oci+cuda_base_single//': index.docker.io/nvidia/cuda is a multi-architecture image, so attribute 'platforms' is required.
+```
+
+**Solution:** Add `platforms` parameter with correct platform strings:
+```python
+oci.pull(
+    name = "cuda_base",
+    image = "docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04",
+    platforms = ["linux/amd64"],  # Required for multi-arch images
+)
+```
+
 ## Common patterns to avoid
 
 ### ❌ Incorrect
@@ -81,7 +106,7 @@ The `oci.pull()` extension creates a repository that can be referenced directly,
 oci.pull(
     name = "my_base",
     image = "ubuntu:22.04",
-    platforms = ["@platforms//os:linux"],  # Wrong
+    platforms = ["@platforms//os:linux", "@platforms//arch:x86_64"],  # Wrong
 )
 
 # Using //image suffix
@@ -101,10 +126,11 @@ oci_image(
 
 ### ✅ Correct
 ```python
-# Simple pull without platforms
+# Pull with platform strings (required for multi-arch images)
 oci.pull(
     name = "my_base",
     image = "docker.io/library/ubuntu:22.04",
+    platforms = ["linux/amd64"],  # Use platform strings, not Bazel targets
 )
 
 # Direct reference
