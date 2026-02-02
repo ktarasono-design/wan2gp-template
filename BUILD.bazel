@@ -3,6 +3,7 @@ load("@io_bazel_rules_docker//docker:docker.bzl", "docker_build", "docker_push")
 
 genrule(
     name = "patch_wan2gp",
+    outs = ["wan2gp_repo"],
     cmd = "git clone https://github.com/deepbeepmeep/Wan2GP.git $@ && sed -i 's/torch.cuda.amp.autocast(/torch.amp.autocast(cuda,/g' $@/models/wan/animate/motion_encoder.py 2>/dev/null || true",
 )
 
