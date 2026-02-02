@@ -10,6 +10,7 @@ The Dockerfile has been successfully converted to a Bazel build system with Dock
 2. **oci_image attribute errors**: Removed unsupported `ports` and `working_directory` attributes
 3. **Genrule environment variable error**: Simplified repository cloning by hardcoding URL in BUILD.bazel
 4. **Image pull error**: Added explicit `docker.io/` registry prefix to base image to fix DNS resolution
+5. **Base image reference error**: Changed `base = "@cuda_base//image"` to `base = "@cuda_base"`
 
 ## File Structure
 

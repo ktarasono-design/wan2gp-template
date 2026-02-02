@@ -139,6 +139,7 @@ oci.pull(
 2. ✅ oci_image attribute errors - Removed unsupported `ports` and `working_directory`
 3. ✅ Genrule environment variable error - Hardcoded repository URL
 4. ✅ Image pull error - Added explicit `docker.io/` registry prefix to fix DNS resolution
+5. ✅ Base image reference error - Changed `base = "@cuda_base//image"` to `base = "@cuda_base"`
 
 ## Architecture
 

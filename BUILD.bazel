@@ -72,7 +72,7 @@ pkg_tar(
 
 oci_image(
     name = "wan2gp_image",
-    base = "@cuda_base//image",
+    base = "@cuda_base",
     entrypoint = ["/usr/bin/tini", "-g", "--", "/bin/bash", "-c", "cd /opt/Wan2GP && /opt/install_deps.sh && /opt/start-wan2gp.sh"],
     env = {
         "CUDA_ARCHITECTURES": "8.0;8.6;8.9;9.0;12.0",

@@ -132,7 +132,7 @@ Edit `BUILD.bazel` to modify the `CUDA_ARCHITECTURES` environment variable:
 
 | Dockerfile | Bazel |
 |------------|-------|
-| `FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04` | `oci.pull("docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04")` in MODULE.bazel |
+| `FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04` | `oci.pull("docker.io/nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04")` in MODULE.bazel + `base = "@cuda_base"` in BUILD.bazel |
 | `RUN git clone ...` | `genrule()` cloning at build time |
 | `RUN sed -i ...` | `genrule()` for patching |
 | `RUN apt-get install ...` | `genrule()` creating install script |
