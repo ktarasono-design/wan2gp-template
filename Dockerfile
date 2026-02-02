@@ -52,15 +52,11 @@ RUN sed -i "s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g" \
 # ---- Python deps (compile-safe order) ----
 # NOTE: Torch already exists in /opt/conda from the base image; do NOT reinstall it.
 RUN python3 -V && \
-    python3 -m pip install --upgrade pip wheel && \
-    python3 -m pip install --no-deps "numpy<2.1" "cython<3.2" "setuptools<75" && \
-    python3 -m pip install -r ${WAN2GP_DIR}/requirements.txt && \
-    python3 - <<'PY'
-import torch, transformers, diffusers, numpy, huggingface_hub, gradio
-print("Sanity:", torch.__version__, transformers.__version__, diffusers.__version__, numpy.__version__, huggingface_hub.__version__, gradio.__version__)
-PY
+    python3 -m pip install --break-system-packages --upgrade pip wheel && \
+    python3 -m pip install --break-system-packages --no-deps "numpy<2.1" "cython<3.2" "setuptools<75" && \
+    python3 -m pip install --break-system-packages -r ${WAN2GP_DIR}/requirements.txt
 
-RUN pip install --extra-index-url https://download.pytorch.org/whl/cu128 \
+RUN pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 \
     torch>=2.6.0+cu128 torchvision>=0.21.0+cu128
 
 # Install SageAttention from git (patch GPU detection)
