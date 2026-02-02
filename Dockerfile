@@ -1,6 +1,6 @@
 # Wan2GP — ProbeAI (A40 / RTX 5090)
 # Base: CUDA 12.8 / cuDNN runtime with Python + PyTorch preinstalled (conda @ /opt/conda)
-FROM pytorch/pytorch:2.8.0-cuda12.8-cudnn9-runtime
+FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04
 
 ARG CUDA_ARCHITECTURES="8.0;8.6;8.9;9.0;12.0"
 
@@ -27,9 +27,6 @@ ENV DEBIAN_FRONTEND=noninteractive \
     GRADIO_SHARE=False \
     GRADIO_USE_CDN=False
 
-# Use the base image’s conda Python (Torch already present here)
-ENV PATH="/opt/conda/bin:${PATH}"
-
 # ---- System deps (toolchain + minimal X/GL for OpenCV/insightface) ----
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     git git-lfs curl ca-certificates ffmpeg aria2 tini jq \
@@ -37,6 +34,12 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
     libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 \
  && git lfs install \
  && rm -rf /var/lib/apt/lists/*
+
+RUN apt update && \
+    apt install -y \
+    python3 python3-pip git wget curl cmake ninja-build \
+    libgl1 libglib2.0-0 ffmpeg && \
+    apt clean
 
 # ---- Clone Wan2GP (pin a commit via build arg; default to main) ----
 ARG WAN2GP_REPO="https://github.com/deepbeepmeep/Wan2GP.git"
@@ -56,6 +59,9 @@ RUN python -V && \
 import torch, transformers, diffusers, numpy, huggingface_hub, gradio
 print("Sanity:", torch.__version__, transformers.__version__, diffusers.__version__, numpy.__version__, huggingface_hub.__version__, gradio.__version__)
 PY
+
+RUN pip install --extra-index-url https://download.pytorch.org/whl/cu128 \
+    torch>=2.6.0+cu128 torchvision>=0.21.0+cu128
 
 # Install SageAttention from git (patch GPU detection)
 ENV TORCH_CUDA_ARCH_LIST="${CUDA_ARCHITECTURES}"
