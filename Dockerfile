@@ -67,7 +67,7 @@ COPY patch_setup.py /tmp/patch_setup.py
 RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && \
     cd /tmp/sageattention && \
     python3 /tmp/patch_setup.py && \
-    python3 -m pip install --no-build-isolation .
+    python3 -m pip install --break-system-packages --no-build-isolation .
 
 # ---- Runtime entry assets ----
 COPY start-wan2gp.sh /opt/start-wan2gp.sh
