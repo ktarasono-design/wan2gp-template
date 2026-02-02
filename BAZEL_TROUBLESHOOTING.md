@@ -98,6 +98,31 @@ oci.pull(
 )
 ```
 
+### 7. Directory Output Declaration Error
+**Error:**
+```
+output 'wan2gp_clone' of //:clone_wan2gp is a directory but was not declared as such
+```
+
+**Solution:** Declare directory outputs with trailing slash and use `$(@D)`:
+```python
+# ❌ Incorrect
+genrule(
+    name = "clone_repo",
+    outs = ["repo"],  # No trailing slash
+    cmd = "git clone https://github.com/user/repo.git $@",
+)
+
+# ✅ Correct
+genrule(
+    name = "clone_repo",
+    outs = ["repo/"],  # Trailing slash indicates directory
+    cmd = "rm -rf $(@D) && git clone https://github.com/user/repo.git $(@D) || true",
+)
+
+# Note: Use $(@D) for directory path, not $@
+```
+
 ## Common patterns to avoid
 
 ### ❌ Incorrect

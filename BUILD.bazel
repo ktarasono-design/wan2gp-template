@@ -19,20 +19,20 @@ genrule(
           "echo 'export EXT_PARALLEL=4 NVCC_APPEND_FLAGS=\"--threads 8\" MAX_JOBS=32' >> $@ && " +
           "echo 'python3 -m pip install --break-system-packages --no-build-isolation .' >> $@ && " +
           "echo 'rm -rf /tmp/sageattention' >> $@",
+    executable = True,
 )
 
 genrule(
     name = "clone_wan2gp",
-    outs = ["wan2gp_clone/"],
-    cmd = "rm -rf $(@D) && git clone https://github.com/deepbeepmeep/Wan2GP.git $(@D) || true",
+    outs = ["wan2gp_clone.tar"],
+    cmd = "git clone https://github.com/deepbeepmeep/Wan2GP.git tmp_repo && tar -cf $@ tmp_repo && rm -rf tmp_repo || true",
 )
 
 genrule(
     name = "patch_wan2gp",
     srcs = [":clone_wan2gp"],
-    outs = ["wan2gp_patched/"],
-    cmd = "rm -rf $(@D) && cp -r $(SRCS) $(@D) && " +
-          "find $(@D) -name 'motion_encoder.py' -exec sed -i 's/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g' {} + 2>/dev/null || true",
+    outs = ["wan2gp_patched.tar"],
+    cmd = "mkdir -p tmp_repo && tar -xf $(SRCS) -C tmp_repo && for f in $(find tmp_repo -name 'motion_encoder.py'); do sed -i \"s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g\" \"$f\"; done && tar -cf $@ -C tmp_repo . && rm -rf tmp_repo || true",
 )
 
 pkg_tar(
