@@ -1,5 +1,5 @@
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("@io_bazel_rules_docker//docker:docker.bzl", "docker_build", "docker_push")
+load("@io_bazel_rules_docker//container:container.bzl", "container_image", "container_push")
 
 genrule(
     name = "patch_wan2gp",
@@ -36,7 +36,7 @@ pkg_tar(
     ],
 )
 
-docker_build(
+container_image(
     name = "wan2gp_image",
     base = "@cuda_base//image",
     tars = [
@@ -82,7 +82,7 @@ docker_build(
     entrypoint = ["/usr/bin/tini", "-g", "--", "/bin/bash", "-c", "cd /opt/Wan2GP && /opt/start-wan2gp.sh"],
 )
 
-docker_push(
+container_push(
     name = "push_dockerhub_latest",
     image = ":wan2gp_image",
     format = "Docker",
@@ -91,7 +91,7 @@ docker_push(
     tag = "latest",
 )
 
-docker_push(
+container_push(
     name = "push_dockerhub_tag",
     image = ":wan2gp_image",
     format = "Docker",
