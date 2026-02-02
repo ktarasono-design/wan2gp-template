@@ -1,8 +1,8 @@
 module(name = "wan2gp")
 
 bazel_dep(name = "rules_oci", version = "1.7.5")
-bazel_dep(name = "rules_pkg", version = "0.11.1")
-bazel_dep(name = "rules_python", version = "0.33.0")
+bazel_dep(name = "rules_pkg", version = "0.10.0")
+bazel_dep(name = "rules_python", version = "0.31.0")
 bazel_dep(name = "platforms", version = "0.0.10")
 
 oci = use_extension("@rules_oci//oci:extensions.bzl", "oci")
