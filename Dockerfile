@@ -62,7 +62,12 @@ ENV TORCH_CUDA_ARCH_LIST="${CUDA_ARCHITECTURES}"
 ENV FORCE_CUDA="1"
 ENV MAX_JOBS="1"
 
-RUN python3 -m pip install --break-system-packages sageattention==2.2.0 --no-build-isolation
+COPY patch_setup.py /tmp/patch_setup.py
+
+RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && \
+    cd /tmp/sageattention && \
+    python3 /tmp/patch_setup.py && \
+    python3 -m pip install --break-system-packages --no-build-isolation .
 
 # ---- Runtime entry assets ----
 COPY start-wan2gp.sh /opt/start-wan2gp.sh
