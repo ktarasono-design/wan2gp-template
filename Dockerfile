@@ -49,8 +49,7 @@ RUN git clone ${WAN2GP_REPO} ${WAN2GP_DIR}
 RUN sed -i "s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g" \
     ${WAN2GP_DIR}/models/wan/animate/motion_encoder.py || true
 
-RUN pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 \
-    torch>=2.6.0+cu128 torchvision>=0.21.0+cu128
+RUN pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.10.0+cu128 torchvision==0.25.0+cu128
 
 # ---- Python deps (compile-safe order) ----
 # NOTE: Torch already exists in /opt/conda from the base image; do NOT reinstall it.
