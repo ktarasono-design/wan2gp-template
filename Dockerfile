@@ -51,11 +51,11 @@ RUN sed -i "s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g" \
 
 # ---- Python deps (compile-safe order) ----
 # NOTE: Torch already exists in /opt/conda from the base image; do NOT reinstall it.
-RUN python -V && \
-    python -m pip install --upgrade pip wheel && \
-    python -m pip install --no-deps "numpy<2.1" "cython<3.2" "setuptools<75" && \
-    python -m pip install -r ${WAN2GP_DIR}/requirements.txt && \
-    python - <<'PY'
+RUN python3 -V && \
+    python3 -m pip install --upgrade pip wheel && \
+    python3 -m pip install --no-deps "numpy<2.1" "cython<3.2" "setuptools<75" && \
+    python3 -m pip install -r ${WAN2GP_DIR}/requirements.txt && \
+    python3 - <<'PY'
 import torch, transformers, diffusers, numpy, huggingface_hub, gradio
 print("Sanity:", torch.__version__, transformers.__version__, diffusers.__version__, numpy.__version__, huggingface_hub.__version__, gradio.__version__)
 PY
@@ -72,8 +72,8 @@ COPY patch_setup.py /tmp/patch_setup.py
 
 RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && \
     cd /tmp/sageattention && \
-    python /tmp/patch_setup.py && \
-    python -m pip install --no-build-isolation .
+    python3 /tmp/patch_setup.py && \
+    python3 -m pip install --no-build-isolation .
 
 # ---- Runtime entry assets ----
 COPY start-wan2gp.sh /opt/start-wan2gp.sh
