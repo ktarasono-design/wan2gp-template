@@ -5,10 +5,10 @@ bazel_dep(name = "rules_pkg", version = "0.10.0")
 bazel_dep(name = "rules_python", version = "0.31.0")
 bazel_dep(name = "platforms", version = "0.0.10")
 
-docker = use_extension("@rules_docker//repositories:repositories.bzl", "docker")
-docker_pull(
+container_pull = use_extension("@rules_docker//container:pull.bzl", "container_pull")
+container_pull(
     name = "cuda_base",
     tag = "12.8.0-cudnn-devel-ubuntu24.04",
-    repository = "nvidia/cuda",
+    reference = "docker.io/nvidia/cuda",
 )
-use_repo(docker, "cuda_base")
+use_repo(container_pull, "cuda_base")
