@@ -38,7 +38,8 @@ RUN apt-get update -y && apt-get install -y --no-install-recommends \
 RUN apt update && \
     apt install -y \
     python3 python3-pip git wget curl cmake ninja-build \
-    libgl1 libglib2.0-0 ffmpeg
+    libgl1 libglib2.0-0 ffmpeg && \
+    apt clean
 
 # ---- Clone Wan2GP (pin a commit via build arg; default to main) ----
 ARG WAN2GP_REPO="https://github.com/deepbeepmeep/Wan2GP.git"
@@ -61,14 +62,7 @@ ENV TORCH_CUDA_ARCH_LIST="${CUDA_ARCHITECTURES}"
 ENV FORCE_CUDA="1"
 ENV MAX_JOBS="1"
 
-COPY patch_setup.py /tmp/patch_setup.py
-
-RUN apt update
-
-RUN git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && \
-    cd /tmp/sageattention && \
-    python3 /tmp/patch_setup.py && \
-    python3 -m pip install --break-system-packages --no-build-isolation .
+RUN python3 -m pip install --break-system-packages sageattention==2.2.0 --no-build-isolation
 
 # ---- Runtime entry assets ----
 COPY start-wan2gp.sh /opt/start-wan2gp.sh
