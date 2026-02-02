@@ -1,5 +1,5 @@
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("@rules_docker//container:container.bzl", "container_image", "container_push")
+load("@rules_docker//docker:docker.bzl", "docker_build", "docker_push", "pkg_tar_layer")
 
 genrule(
     name = "patch_wan2gp",
@@ -35,27 +35,51 @@ pkg_tar(
     ],
 )
 
-container_image(
+pkg_tar_layer(
+    name = "sys_deps_layer",
+    cmds = [
+        "apt-get update -y && apt-get install -y --no-install-recommends git git-lfs curl ca-certificates ffmpeg aria2 tini jq build-essential python3-dev pkg-config libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 python3 python3-pip wget curl cmake ninja-build",
+        "git lfs install",
+        "apt-get clean && rm -rf /var/lib/apt/lists/*",
+    ],
+)
+
+pkg_tar_layer(
+    name = "pytorch_layer",
+    cmds = [
+        "python3 -m pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.10.0+cu128 torchvision==0.25.0+cu128",
+        "python3 -m pip install --break-system-packages --no-deps 'numpy<2.1' 'cython<3.2' 'setuptools<75'",
+    ],
+)
+
+pkg_tar_layer(
+    name = "wan2gp_deps_layer",
+    cmds = [
+        "python3 -m pip install --break-system-packages /opt/Wan2GP/requirements.txt",
+    ],
+)
+
+pkg_tar_layer(
+    name = "sageattention_layer",
+    cmds = [
+        "export TORCH_CUDA_ARCH_LIST='8.0;8.6;8.9;9.0;12.0' FORCE_CUDA='1' MAX_JOBS='1'",
+        "git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention",
+        "cd /tmp/sageattention && export EXT_PARALLEL=4 NVCC_APPEND_FLAGS='--threads 8' MAX_JOBS=32 && python3 -m pip install --break-system-packages --no-build-isolation .",
+        "rm -rf /tmp/sageattention",
+    ],
+)
+
+docker_build(
     name = "wan2gp_image",
     base = "@cuda_base//image",
     tars = [
         ":wan2gp_tar",
         ":start_scripts",
         ":workspace_dirs",
-    ],
-    cmd = [
-        "/bin/bash", "-c",
-        "apt-get update -y && apt-get install -y --no-install-recommends git git-lfs curl ca-certificates ffmpeg aria2 tini jq build-essential python3-dev pkg-config libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 python3 python3-pip wget curl cmake ninja-build && " +
-        "git lfs install && " +
-        "apt-get clean && rm -rf /var/lib/apt/lists/* && " +
-        "python3 -m pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.10.0+cu128 torchvision==0.25.0+cu128 && " +
-        "python3 -m pip install --break-system-packages --no-deps 'numpy<2.1' 'cython<3.2' 'setuptools<75' && " +
-        "python3 -m pip install --break-system-packages /opt/Wan2GP/requirements.txt && " +
-        "export TORCH_CUDA_ARCH_LIST='8.0;8.6;8.9;9.0;12.0' FORCE_CUDA='1' MAX_JOBS='1' && " +
-        "git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention && " +
-        "cd /tmp/sageattention && export EXT_PARALLEL=4 NVCC_APPEND_FLAGS='--threads 8' MAX_JOBS=32 && python3 -m pip install --break-system-packages --no-build-isolation . && " +
-        "rm -rf /tmp/sageattention && " +
-        "/opt/start-wan2gp.sh",
+        ":sys_deps_layer",
+        ":pytorch_layer",
+        ":wan2gp_deps_layer",
+        ":sageattention_layer",
     ],
     env = {
         "CUDA_ARCHITECTURES": "8.0;8.6;8.9;9.0;12.0",
@@ -80,11 +104,10 @@ container_image(
         "GRADIO_SHARE": "False",
         "GRADIO_USE_CDN": "False",
     },
-    ports = ["7862", "8888"],
-    workdir = "/opt/Wan2GP",
+    entrypoint = ["/usr/bin/tini", "-g", "--", "/bin/bash", "-c", "cd /opt/Wan2GP && /opt/start-wan2gp.sh"],
 )
 
-container_push(
+docker_push(
     name = "push_dockerhub_latest",
     image = ":wan2gp_image",
     format = "Docker",
@@ -93,7 +116,7 @@ container_push(
     tag = "latest",
 )
 
-container_push(
+docker_push(
     name = "push_dockerhub_tag",
     image = ":wan2gp_image",
     format = "Docker",
