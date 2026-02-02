@@ -52,7 +52,6 @@ RUN sed -i "s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g" \
 # ---- Python deps (compile-safe order) ----
 # NOTE: Torch already exists in /opt/conda from the base image; do NOT reinstall it.
 RUN python3 -V && \
-    python3 -m pip install --break-system-packages --upgrade pip wheel && \
     python3 -m pip install --break-system-packages --no-deps "numpy<2.1" "cython<3.2" "setuptools<75" && \
     python3 -m pip install --break-system-packages -r ${WAN2GP_DIR}/requirements.txt
 
