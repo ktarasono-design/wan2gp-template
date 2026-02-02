@@ -1,5 +1,5 @@
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("@rules_docker//docker:docker.bzl", "docker_build", "docker_push")
+load("@io_bazel_rules_docker//docker:docker.bzl", "docker_build", "docker_push")
 
 genrule(
     name = "patch_wan2gp",
