@@ -1,0 +1,10 @@
+build --action_env=WAN2GP_REPO
+build --host_action_env=WAN2GP_REPO
+
+test --action_env=WAN2GP_REPO
+test --host_action_env=WAN2GP_REPO
+
+# Docker Hub configuration
+build --define=DOCKERHUB_USERNAME=yourusername
+build --define=GHCR_USERNAME=yourusername
+build --define=VERSION=v1.0.0

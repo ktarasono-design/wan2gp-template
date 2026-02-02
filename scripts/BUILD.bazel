@@ -1,0 +1,7 @@
+load("@rules_python//python:defs.bzl", "py_binary")
+
+py_binary(
+    name = "wan2gp_clone",
+    srcs = ["clone_wan2gp.py"],
+    main = "clone_wan2gp.py",
+)
