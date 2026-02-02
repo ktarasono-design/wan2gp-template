@@ -19,47 +19,41 @@ bazel run //:wan2gp_image
 
 ## Push to Docker Hub
 
-## Push to Docker Hub
-
 First, authenticate with Docker Hub:
 
 ```bash
 docker login
 ```
 
-Push to Docker Hub (replace `yourusername` with your Docker Hub username):
+Push to Docker Hub (default repository: `docker.io/stabldiff/wan2gp`):
 
 ```bash
-# Push with 'latest' tag
+# Push with 'latest' tag (using default username from .bazelrc)
+bazel run //:push_dockerhub_latest
+
+# Push with custom username
 bazel run //:push_dockerhub_latest --define=DOCKERHUB_USERNAME=yourusername
 
 # Push with custom version tag
-bazel run //:push_dockerhub_tag --define=DOCKERHUB_USERNAME=yourusername --define=VERSION=v1.0.0
+bazel run //:push_dockerhub_tag --define=VERSION=v1.0.0
 
 # Push multiple tags
-bazel run //:push_dockerhub_latest --define=DOCKERHUB_USERNAME=yourusername && \
-bazel run //:push_dockerhub_tag --define=DOCKERHUB_USERNAME=yourusername --define=VERSION=v1.0.0
+bazel run //:push_dockerhub_latest && \
+bazel run //:push_dockerhub_tag --define=VERSION=v1.0.0
 
-# Using aliases (after setting defaults in .bazelrc)
+# Using aliases
 bazel run //:push              # same as push_dockerhub_latest
 bazel run //:push-latest
 bazel run //:push-version
 ```
 
-**Set defaults in `.bazelrc`:**
+**Configuration:**
 
 Edit `.bazelrc` to configure your Docker Hub username and default version:
 
 ```
 build --define=DOCKERHUB_USERNAME=yourusername
 build --define=VERSION=v1.0.0
-```
-
-Then you can simply run:
-
-```bash
-bazel run //:push_dockerhub_latest
-bazel run //:push_dockerhub_tag
 ```
 
 The image will be pushed to: `docker.io/yourusername/wan2gp:tag`
@@ -144,4 +138,13 @@ Edit `BUILD.bazel` to modify the `CUDA_ARCHITECTURES` environment variable:
 | `COPY file.sh /opt/` | `pkg_tar()` with srcs |
 | `ENV VAR=value` | `oci_image(env={...})` |
 | `ENTRYPOINT [...]` | `oci_image(entrypoint=[...])` |
-| `EXPOSE 7862` | `oci_image(ports=["7862"])` |
+| `EXPOSE 7862` | Handled via environment variables |
+| `WORKDIR /opt/Wan2GP` | Included in entrypoint command |
+
+## Notes
+
+- Dependencies are installed at container startup via `/opt/install_deps.sh`
+- This allows for faster builds and smaller base images
+- The entrypoint changes to `/opt/Wan2GP`, runs dependencies, then starts the application
+- Ports (7862, 8888) are exposed through the base CUDA image and configured via environment variables
+- Working directory is set in the entrypoint command rather than as a separate attribute

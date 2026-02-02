@@ -73,7 +73,7 @@ pkg_tar(
 oci_image(
     name = "wan2gp_image",
     base = "@cuda_base//image",
-    entrypoint = ["/usr/bin/tini", "-g", "--", "/bin/bash", "-c", "/opt/install_deps.sh && /opt/start-wan2gp.sh"],
+    entrypoint = ["/usr/bin/tini", "-g", "--", "/bin/bash", "-c", "cd /opt/Wan2GP && /opt/install_deps.sh && /opt/start-wan2gp.sh"],
     env = {
         "CUDA_ARCHITECTURES": "8.0;8.6;8.9;9.0;12.0",
         "DEBIAN_FRONTEND": "noninteractive",
@@ -100,14 +100,12 @@ oci_image(
         "FORCE_CUDA": "1",
         "MAX_JOBS": "1",
     },
-    ports = ["7862", "8888"],
     tars = [
         ":wan2gp_tar",
         ":install_deps_tar",
         ":start_scripts",
         ":workspace_dirs",
     ],
-    working_directory = "/opt/Wan2GP",
 )
 
 oci_tarball(

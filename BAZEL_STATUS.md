@@ -69,7 +69,7 @@ Edit `.bazelrc` to change:
 3. **Repository Clone**: Clones Wan2GP from GitHub during build
 4. **Patching**: Applies torch.cuda.amp.autocast patch
 5. **Layer Assembly**: Creates tar layers for repo, scripts, and workspace directories
-6. **Image Assembly**: Combines all layers into final OCI image with environment variables and ports
+6. **Image Assembly**: Combines all layers into final OCI image with environment variables
 
 ## Notes
 
