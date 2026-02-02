@@ -141,6 +141,7 @@ oci.pull(
 4. ✅ Image pull error - Added explicit `docker.io/` registry prefix to fix DNS resolution
 5. ✅ Base image reference error - Changed `base = "@cuda_base//image"` to `base = "@cuda_base"`
 6. ✅ Multi-architecture image error - Added required `platforms` parameter to `oci.pull()`
+7. ✅ Directory output declaration error - Added trailing slashes to directory outputs and used `$(@D)` for directory operations
 
 ## Architecture
 

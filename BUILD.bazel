@@ -23,22 +23,23 @@ genrule(
 
 genrule(
     name = "clone_wan2gp",
-    outs = ["wan2gp_clone"],
-    cmd = "git clone https://github.com/deepbeepmeep/Wan2GP.git $@ || true",
+    outs = ["wan2gp_clone/"],
+    cmd = "rm -rf $(@D) && git clone https://github.com/deepbeepmeep/Wan2GP.git $(@D) || true",
 )
 
 genrule(
     name = "patch_wan2gp",
     srcs = [":clone_wan2gp"],
-    outs = ["wan2gp_patched"],
-    cmd = "cp -r $(SRCS) $@ && " +
-          "find $@ -name 'motion_encoder.py' -exec sed -i 's/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g' {} + 2>/dev/null || true",
+    outs = ["wan2gp_patched/"],
+    cmd = "rm -rf $(@D) && cp -r $(SRCS) $(@D) && " +
+          "find $(@D) -name 'motion_encoder.py' -exec sed -i 's/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g' {} + 2>/dev/null || true",
 )
 
 pkg_tar(
     name = "wan2gp_tar",
     srcs = [":patch_wan2gp"],
     package_dir = "/opt/Wan2GP",
+    strip_prefix = "",
 )
 
 pkg_tar(
