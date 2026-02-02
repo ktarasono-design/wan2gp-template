@@ -24,7 +24,7 @@ genrule(
 genrule(
     name = "clone_wan2gp",
     outs = ["wan2gp_clone"],
-    cmd = "git clone $(WAN2GP_REPO) $@ || true",
+    cmd = "git clone https://github.com/deepbeepmeep/Wan2GP.git $@ || true",
 )
 
 genrule(

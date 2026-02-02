@@ -57,17 +57,18 @@ bazel run //:push_dockerhub_tag --define=VERSION=v1.0.0
 ## Configuration
 
 Edit `.bazelrc` to change:
-- `WAN2GP_REPO`: Git repository URL
 - `DOCKERHUB_USERNAME`: Docker Hub username (default: stabldiff)
 - `GHCR_USERNAME`: GitHub username
 - `VERSION`: Default version tag
+
+Edit `BUILD.bazel` to change the Wan2GP repository URL in the `clone_wan2gp` genrule.
 
 ## Architecture
 
 1. **Base Layer**: Pulls nvidia/cuda:12.8.0-cudnn-devel-ubuntu24.04
 2. **Dependency Script**: Generated at build time to install system and Python packages
-3. **Repository Clone**: Clones Wan2GP from GitHub during build
-4. **Patching**: Applies torch.cuda.amp.autocast patch
+3. **Repository Clone**: Clones Wan2GP from GitHub via genrule at build time
+4. **Patching**: Applies torch.cuda.amp.autocast patch via genrule
 5. **Layer Assembly**: Creates tar layers for repo, scripts, and workspace directories
 6. **Image Assembly**: Combines all layers into final OCI image with environment variables
 

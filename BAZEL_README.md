@@ -95,12 +95,14 @@ bazel run //:push_custom --define=CUSTOM_REGISTRY=localhost:5000/wan2gp --define
 
 ## Build with custom Wan2GP repo
 
-```bash
-# Build with custom repository
-bazel build --action_env=WAN2GP_REPO=https://github.com/your/custom/repo.git //:wan2gp_image
+Edit the `clone_wan2gp` genrule in `BUILD.bazel` to change the repository URL:
 
-# Push with custom repository
-bazel run //:push_dockerhub_latest --action_env=WAN2GP_REPO=https://github.com/your/custom/repo.git
+```python
+genrule(
+    name = "clone_wan2gp",
+    outs = ["wan2gp_clone"],
+    cmd = "git clone https://github.com/your/custom/repo.git $@ || true",
+)
 ```
 
 ## Custom CUDA architectures
