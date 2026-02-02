@@ -122,14 +122,14 @@ oci_tarball(
 oci_push(
     name = "push_dockerhub_latest",
     image = ":wan2gp_image",
-    repository = "docker.io/$(DOCKERHUB_USERNAME)/wan2gp",
+    repository = "docker.io/stabldiff/wan2gp",
     remote_tags = ["latest"],
 )
 
 oci_push(
     name = "push_dockerhub_tag",
     image = ":wan2gp_image",
-    repository = "docker.io/$(DOCKERHUB_USERNAME)/wan2gp",
+    repository = "docker.io/stabldiff/wan2gp",
     remote_tags = ["$(VERSION)"],
 )
 
