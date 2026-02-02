@@ -8,6 +8,18 @@ git_repository(
     tag = "v0.25.0",
 )
 
+git_repository(
+    name = "rules_pkg",
+    remote = "https://github.com/bazelbuild/rules_pkg.git",
+    tag = "0.10.0",
+)
+
+git_repository(
+    name = "rules_cc",
+    remote = "https://github.com/bazelbuild/rules_cc.git",
+    tag = "0.0.9",
+)
+
 load(
     "@io_bazel_rules_docker//repositories:repositories.bzl",
     container_repositories = "repositories",

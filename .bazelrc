@@ -1,5 +1,6 @@
 # Disable Bzlmod to use WORKSPACE for rules_docker
 build --enable_bzlmod=false
+build --enable_workspace=true
 
 # Docker Hub configuration
 build --define=DOCKERHUB_USERNAME=stabldiff
