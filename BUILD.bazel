@@ -1,33 +1,24 @@
 load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
-load("@rules_python//python:defs.bzl", "py_binary")
-load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball")
-load("@rules_pkg//pkg:providers.bzl", "PackageDirInfo")
+load("@rules_oci//oci:defs.bzl", "oci_image", "oci_tarball", "oci_push")
 
 genrule(
     name = "install_deps",
     outs = ["install_deps.sh"],
-    cmd = """cat > $@ <<'EOF'
-#!/bin/bash
-set -e
-apt-get update -y && apt-get install -y --no-install-recommends \\
-    git git-lfs curl ca-certificates ffmpeg aria2 tini jq \\
-    build-essential python3-dev pkg-config \\
-    libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 \\
-    python3 python3-pip wget curl cmake ninja-build
-git lfs install
-apt-get clean
-rm -rf /var/lib/apt/lists/*
-python3 -m pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.10.0+cu128 torchvision==0.25.0+cu128
-python3 -m pip install --break-system-packages --no-deps "numpy<2.1" "cython<3.2" "setuptools<75"
-python3 -m pip install --break-system-packages /opt/Wan2GP/requirements.txt
-export TORCH_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0;12.0" FORCE_CUDA="1" MAX_JOBS="1"
-git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention
-cd /tmp/sageattention
-export EXT_PARALLEL=4 NVCC_APPEND_FLAGS="--threads 8" MAX_JOBS=32
-python3 -m pip install --break-system-packages --no-build-isolation .
-rm -rf /tmp/sageattention
-EOF
-""",
+    cmd = "echo '#!/bin/bash' > $@ && " +
+          "echo 'set -e' >> $@ && " +
+          "echo 'apt-get update -y && apt-get install -y --no-install-recommends git git-lfs curl ca-certificates ffmpeg aria2 tini jq build-essential python3-dev pkg-config libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 python3 python3-pip wget curl cmake ninja-build' >> $@ && " +
+          "echo 'git lfs install' >> $@ && " +
+          "echo 'apt-get clean' >> $@ && " +
+          "echo 'rm -rf /var/lib/apt/lists/*' >> $@ && " +
+          "echo 'python3 -m pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 torch==2.10.0+cu128 torchvision==0.25.0+cu128' >> $@ && " +
+          "echo 'python3 -m pip install --break-system-packages --no-deps \"numpy<2.1\" \"cython<3.2\" \"setuptools<75\"' >> $@ && " +
+          "echo 'python3 -m pip install --break-system-packages /opt/Wan2GP/requirements.txt' >> $@ && " +
+          "echo 'export TORCH_CUDA_ARCH_LIST=\"8.0;8.6;8.9;9.0;12.0\" FORCE_CUDA=\"1\" MAX_JOBS=\"1\"' >> $@ && " +
+          "echo 'git clone https://github.com/thu-ml/SageAttention.git /tmp/sageattention' >> $@ && " +
+          "echo 'cd /tmp/sageattention' >> $@ && " +
+          "echo 'export EXT_PARALLEL=4 NVCC_APPEND_FLAGS=\"--threads 8\" MAX_JOBS=32' >> $@ && " +
+          "echo 'python3 -m pip install --break-system-packages --no-build-isolation .' >> $@ && " +
+          "echo 'rm -rf /tmp/sageattention' >> $@",
 )
 
 genrule(
@@ -41,7 +32,7 @@ genrule(
     srcs = [":clone_wan2gp"],
     outs = ["wan2gp_patched"],
     cmd = "cp -r $(SRCS) $@ && " +
-          "sed -i \"s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g\" $@/models/wan/animate/motion_encoder.py || true",
+          "find $@ -name 'motion_encoder.py' -exec sed -i 's/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g' {} + 2>/dev/null || true",
 )
 
 pkg_tar(

@@ -7,7 +7,7 @@ test --host_action_env=WAN2GP_REPO
 # Wan2GP repository
 build --action_env=WAN2GP_REPO=https://github.com/deepbeepmeep/Wan2GP.git
 
-# Docker Hub configuration (pre-configured to stabldiff/wan2gp)
+# Docker Hub configuration
 build --define=DOCKERHUB_USERNAME=stabldiff
 build --define=GHCR_USERNAME=yourusername
 build --define=VERSION=v1.0.0

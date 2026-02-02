@@ -10,15 +10,14 @@ This is a Bazel-based build system for Wan2GP, replacing the original Dockerfile
 ## Build Commands
 
 ```bash
-# Build the container image tarball
-bazel build //:wan2gp_tarball
+# Build the container image
+bazel build //:wan2gp_image
 
-# Load into Docker
-docker load -i bazel-bin/wan2gp_tarball/tar.tar
-
-# Or directly build and load
+# Or directly build and load to Docker (recommended)
 bazel run //:wan2gp_image
 ```
+
+## Push to Docker Hub
 
 ## Push to Docker Hub
 
