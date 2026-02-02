@@ -61,7 +61,7 @@ oci_image(
 
 ```bash
 # Build container image
-bazel build //:wan2gp_image
+fi
 
 # Build and load to Docker
 bazel run //:wan2gp_image

@@ -32,7 +32,7 @@ genrule(
     name = "patch_wan2gp",
     srcs = [":clone_wan2gp"],
     outs = ["wan2gp_patched.tar"],
-    cmd = "mkdir -p tmp_repo && tar -xf $(SRCS) -C tmp_repo && for f in $(find tmp_repo -name 'motion_encoder.py'); do sed -i \"s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g\" \"$f\"; done && tar -cf $@ -C tmp_repo . && rm -rf tmp_repo || true",
+    cmd = "mkdir -p tmp_repo && tar -xf $(SRCS) -C tmp_repo && sed -i \"s/torch.cuda.amp.autocast(/torch.amp.autocast(cuda,/g\" tmp_repo/models/wan/animate/motion_encoder.py 2>/dev/null || true && tar -cf $@ -C tmp_repo . && rm -rf tmp_repo || true",
 )
 
 pkg_tar(
