@@ -49,14 +49,14 @@ RUN git clone ${WAN2GP_REPO} ${WAN2GP_DIR}
 RUN sed -i "s/torch.cuda.amp.autocast(/torch.amp.autocast('cuda', /g" \
     ${WAN2GP_DIR}/models/wan/animate/motion_encoder.py || true
 
+RUN pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 \
+    torch>=2.6.0+cu128 torchvision>=0.21.0+cu128
+
 # ---- Python deps (compile-safe order) ----
 # NOTE: Torch already exists in /opt/conda from the base image; do NOT reinstall it.
 RUN python3 -V && \
     python3 -m pip install --break-system-packages --no-deps "numpy<2.1" "cython<3.2" "setuptools<75" && \
     python3 -m pip install --break-system-packages -r ${WAN2GP_DIR}/requirements.txt
-
-RUN pip install --break-system-packages --extra-index-url https://download.pytorch.org/whl/cu128 \
-    torch>=2.6.0+cu128 torchvision>=0.21.0+cu128
 
 # Install SageAttention from git (patch GPU detection)
 ENV TORCH_CUDA_ARCH_LIST="${CUDA_ARCHITECTURES}"
